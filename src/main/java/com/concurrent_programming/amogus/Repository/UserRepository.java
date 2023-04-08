@@ -1,6 +1,7 @@
 package com.concurrent_programming.amogus.Repository;
 
 import com.concurrent_programming.amogus.Model.User;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;

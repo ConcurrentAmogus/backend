@@ -1,0 +1,1 @@
+gcloud builds submit --tag gcr.io/amogus-a30f9/api-amogus

@@ -1,0 +1,1 @@
+gcloud run deploy api-amogus-live --image=gcr.io/amogus-a30f9/api-amogus:latest
