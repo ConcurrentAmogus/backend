@@ -38,17 +38,11 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody User user) {
-        if (user == null ||
-            user.getId().equals("") ||
-            user.getName().equals("") ||
-            user.getCountry().equals("")
-        ) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request body");
-        }
-
         User newUser = userService.createUser(user);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        if (newUser != null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request body");
     }
 
     @PutMapping
@@ -57,7 +51,6 @@ public class UserController {
         if (updateUser != null) {
             return ResponseEntity.status(HttpStatus.OK).body(updateUser);
         }
-
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id '" + user.getId() + "'");
     }
 

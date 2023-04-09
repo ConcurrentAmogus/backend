@@ -4,6 +4,8 @@ import com.concurrent_programming.amogus.Model.User;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -42,6 +44,14 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public User createUser(User user) {
+        if (user == null ||
+            user.getId().equals("") ||
+            user.getName().equals("") ||
+            user.getCountry().equals("")
+        ) {
+            return null;
+        }
+
         ApiFuture<WriteResult> apiFuture = firestore.collection("user").document(user.getId()).set(user);
         return user;
     }
