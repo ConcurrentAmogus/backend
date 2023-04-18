@@ -17,15 +17,14 @@ public class ChatController {
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
-    // Mapped as /app/public-message
-    @MessageMapping("/public-message")
+    // Mapped as /ws/send-public-message
+    @MessageMapping("/send-public-message")
     public Message handlePublicMessage(@Payload RoomAndMessagePayloads payloads) {
-        // destination = "/chat/{roomId}/public"
-        System.out.println("Room: " + payloads.getRoom());
-        System.out.println("Message: " + payloads.getMessage());
         Room room = payloads.getRoom();
         Message message = payloads.getMessage();
+
         try {
+            // topic = "/chat/{roomId}/public"
             simpMessagingTemplate.convertAndSendToUser(room.getRoomId(), "/public", message);
             return message;
         } catch (Exception ex) {
@@ -33,17 +32,15 @@ public class ChatController {
         }
     }
 
-    // Mapped as /app/private-message (Only wolf and seer have private chat)
-    @MessageMapping("/private-message")
+    // Mapped as /ws/send-private-message (Only wolf and seer have private chat)
+    @MessageMapping("/send-private-message")
     public Message handlePrivateMessage(@Payload RoomPlayerMessagePayloads payloads) {
-        // destination = "/chat/{roomId}-{role}/private"
-        System.out.println("Room: " + payloads.getRoom());
-        System.out.println("Player: " + payloads.getPlayer());
-        System.out.println("Message: " + payloads.getMessage());
         Room room = payloads.getRoom();
         Player player = payloads.getPlayer();
         Message message = payloads.getMessage();
+
         try {
+            // topic = "/chat/{roomId}-{role}/private"
             simpMessagingTemplate.convertAndSendToUser(room.getRoomId() + "-" + player.getRole(), "/private", message);
             return message;
         } catch (Exception ex) {

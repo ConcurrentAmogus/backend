@@ -13,10 +13,11 @@ public class RoomController {
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
+    // Mapped as /ws/update-room
     @MessageMapping("/update-room")
     public Room updateRoomInfo(@Payload Room room) {
-        // destination = "/room/{roomId}"
         try {
+            // topic = "/room/{roomId}"
             simpMessagingTemplate.convertAndSend("/room/" + room.getRoomId(), room);
             System.out.println("Room Info: " +  room);
             return room;
