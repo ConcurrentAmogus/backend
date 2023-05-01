@@ -1,1 +1,1 @@
-gcloud config set project fullStack
+gcloud config set project amogus-d0e63
