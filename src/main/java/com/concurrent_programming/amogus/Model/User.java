@@ -8,6 +8,5 @@ import lombok.Setter;
 public class User {
 
     private String id;
-    private String name;
-    private String country;
+    private String username;
 }

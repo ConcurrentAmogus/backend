@@ -1,5 +1,6 @@
 package com.concurrent_programming.amogus;
 
+import com.concurrent_programming.amogus.Config.FirebaseConfig;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -16,21 +17,8 @@ import java.util.List;
 public class AmogusApplication {
 
 	public static void main(String[] args) throws IOException {
-		String path = "src/main/resources/serviceAccountKey.json";
-		File file = new File(path);
-		FileInputStream serviceAccount = new FileInputStream(file.getAbsolutePath());
-
-		FirebaseOptions options = FirebaseOptions.builder().setCredentials(GoogleCredentials.fromStream(serviceAccount)).build();
-		FirebaseApp firebaseApp = null;
-		List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
-		if(firebaseApps!=null && !firebaseApps.isEmpty()) {
-			for(FirebaseApp app : firebaseApps){
-				if(app.getName().equals(FirebaseApp.DEFAULT_APP_NAME))
-					firebaseApp = app;
-			}
-		}
-		else
-			firebaseApp = FirebaseApp.initializeApp(options);
+		FirebaseConfig db = new FirebaseConfig();
+		db.connect();
 
 		SpringApplication.run(AmogusApplication.class, args);
 	}

@@ -46,8 +46,7 @@ public class UserRepositoryImpl implements UserRepository {
     public User createUser(User user) {
         if (user == null ||
             user.getId().trim().equals("") ||
-            user.getName().trim().equals("") ||
-            user.getCountry().trim().equals("")
+            user.getUsername().trim().equals("")
         ) {
             return null;
         }
