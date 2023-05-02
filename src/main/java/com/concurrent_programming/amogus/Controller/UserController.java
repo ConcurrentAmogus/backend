@@ -19,8 +19,8 @@ public class UserController {
     UserService userService;
 
     @GetMapping
-    public ResponseEntity<?> getAllUsers() throws ExecutionException, InterruptedException {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<?> findAllUsers() throws ExecutionException, InterruptedException {
+        List<User> users = userService.findAllUsers();
         if (users != null) {
             return ResponseEntity.status(HttpStatus.OK).body(users);
         }
@@ -28,8 +28,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUser(@PathVariable(value = "id") String id) throws ExecutionException, InterruptedException {
-        User user = userService.getUser(id);
+    public ResponseEntity<?> findUserById(@PathVariable(value = "id") String id) throws ExecutionException, InterruptedException {
+        User user = userService.findUserById(id);
         if (user != null) {
             return ResponseEntity.status(HttpStatus.OK).body(user);
         }

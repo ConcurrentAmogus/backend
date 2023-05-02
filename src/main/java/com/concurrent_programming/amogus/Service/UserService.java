@@ -1,7 +1,6 @@
 package com.concurrent_programming.amogus.Service;
 
 import com.concurrent_programming.amogus.Model.User;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -9,9 +8,9 @@ import java.util.concurrent.ExecutionException;
 
 public interface UserService {
 
-    public List<User> getAllUsers() throws ExecutionException, InterruptedException;
+    public List<User> findAllUsers() throws ExecutionException, InterruptedException;
 
-    public User getUser(String id) throws ExecutionException, InterruptedException;
+    public User findUserById(String id) throws ExecutionException, InterruptedException;
 
     public User createUser(User user);
 

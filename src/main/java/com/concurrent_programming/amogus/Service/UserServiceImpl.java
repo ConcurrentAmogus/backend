@@ -14,24 +14,24 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository userRepository;
 
-    public List<User> getAllUsers() throws ExecutionException, InterruptedException {
-        return userRepository.getAllUsers();
+    public List<User> findAllUsers() throws ExecutionException, InterruptedException {
+        return userRepository.findAll();
     }
 
-    public User getUser(String id) throws ExecutionException, InterruptedException {
-        return userRepository.getUser(id);
+    public User findUserById(String id) throws ExecutionException, InterruptedException {
+        return userRepository.findById(id);
     }
 
     public User createUser(User user) {
-        return userRepository.createUser(user);
+        return userRepository.create(user);
     }
 
     public User updateUser(User user) throws ExecutionException, InterruptedException {
-        return userRepository.updateUser(user);
+        return userRepository.update(user);
     }
 
     public String deleteUser(String id) throws ExecutionException, InterruptedException {
-        return userRepository.deleteUser(id);
+        return userRepository.delete(id);
     }
 
 }

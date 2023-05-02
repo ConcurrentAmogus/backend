@@ -18,7 +18,7 @@ public class UserRepositoryImpl implements UserRepository {
     Firestore firestore = FirestoreClient.getFirestore();
 
     @Override
-    public List<User> getAllUsers() throws ExecutionException, InterruptedException {
+    public List<User> findAll() throws ExecutionException, InterruptedException {
         ApiFuture<QuerySnapshot> apiFuture = firestore.collection("user").get();
         List<QueryDocumentSnapshot> docs = apiFuture.get().getDocuments();
         List<User> users = new ArrayList<>();
@@ -29,7 +29,7 @@ public class UserRepositoryImpl implements UserRepository {
         return users;
     }
     @Override
-    public User getUser(String id) throws ExecutionException, InterruptedException {
+    public User findById(String id) throws ExecutionException, InterruptedException {
         DocumentReference documentReference = firestore.collection("user").document(id);
         ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
         DocumentSnapshot doc = apiFuture.get();
@@ -43,7 +43,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public User createUser(User user) {
+    public User create(User user) {
         if (user == null ||
             user.getId().trim().equals("") ||
             user.getUsername().trim().equals("")
@@ -55,7 +55,7 @@ public class UserRepositoryImpl implements UserRepository {
         return user;
     }
     @Override
-    public User updateUser(User user) throws ExecutionException, InterruptedException {
+    public User update(User user) throws ExecutionException, InterruptedException {
         DocumentReference documentReference = firestore.collection("user").document(user.getId());
         ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
         DocumentSnapshot doc = apiFuture.get();
@@ -67,7 +67,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public String deleteUser(String id) throws ExecutionException, InterruptedException {
+    public String delete(String id) throws ExecutionException, InterruptedException {
         DocumentReference documentReference = firestore.collection("user").document(id);
         ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
         DocumentSnapshot doc = apiFuture.get();
