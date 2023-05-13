@@ -1,13 +1,12 @@
 package com.concurrent_programming.amogus.Controller;
 
 import com.concurrent_programming.amogus.Model.Message;
-import com.concurrent_programming.amogus.Model.Player;
 import com.concurrent_programming.amogus.Model.Room;
+import com.concurrent_programming.amogus.Model.User;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -36,12 +35,12 @@ public class ChatController {
     @MessageMapping("/send-private-message")
     public Message handlePrivateMessage(@Payload RoomPlayerMessagePayloads payloads) {
         Room room = payloads.getRoom();
-        Player player = payloads.getPlayer();
+        User user = payloads.getUser();
         Message message = payloads.getMessage();
 
         try {
             // topic = "/chat/{roomId}-{role}/private"
-            simpMessagingTemplate.convertAndSendToUser(room.getRoomId() + "-" + player.getRole(), "/private", message);
+            simpMessagingTemplate.convertAndSendToUser(room.getRoomId() + "-" + user.getRole(), "/private", message);
             return message;
         } catch (Exception ex) {
             throw new RuntimeException("Failed to handle private message");
@@ -57,7 +56,7 @@ public class ChatController {
     @Data
     private static class RoomPlayerMessagePayloads {
         private Room room;
-        private Player player;
+        private User user;
         private Message message;
     }
 }
