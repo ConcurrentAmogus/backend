@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class Room {
 
-    private String roomId;
+    private String id;
     private String status;
+    private boolean isNewRoom;
 }

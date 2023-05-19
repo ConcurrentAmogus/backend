@@ -21,10 +21,12 @@ public class ChatController {
     public Message handlePublicMessage(@Payload RoomAndMessagePayloads payloads) {
         Room room = payloads.getRoom();
         Message message = payloads.getMessage();
+        System.out.println("Room: " + room);
+        System.out.println("Message: " + message);
 
         try {
             // topic = "/chat/{roomId}/public"
-            simpMessagingTemplate.convertAndSendToUser(room.getRoomId(), "/public", message);
+            simpMessagingTemplate.convertAndSendToUser(room.getId(), "/public", message);
             return message;
         } catch (Exception ex) {
             throw new RuntimeException("Failed to handle public message");
@@ -33,14 +35,14 @@ public class ChatController {
 
     // Mapped as /ws/send-private-message (Only wolf and seer have private chat)
     @MessageMapping("/send-private-message")
-    public Message handlePrivateMessage(@Payload RoomPlayerMessagePayloads payloads) {
+    public Message handlePrivateMessage(@Payload RoomUserMessagePayloads payloads) {
         Room room = payloads.getRoom();
         User user = payloads.getUser();
         Message message = payloads.getMessage();
 
         try {
             // topic = "/chat/{roomId}-{role}/private"
-            simpMessagingTemplate.convertAndSendToUser(room.getRoomId() + "-" + user.getRole(), "/private", message);
+            simpMessagingTemplate.convertAndSendToUser(room.getId() + "-" + user.getRole(), "/private", message);
             return message;
         } catch (Exception ex) {
             throw new RuntimeException("Failed to handle private message");
@@ -54,7 +56,7 @@ public class ChatController {
     }
 
     @Data
-    private static class RoomPlayerMessagePayloads {
+    private static class RoomUserMessagePayloads {
         private Room room;
         private User user;
         private Message message;

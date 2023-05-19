@@ -42,7 +42,8 @@ public class UserRepository {
     public User create(User user) {
         if (user == null ||
             user.getId().trim().equals("") ||
-            user.getUsername().trim().equals("")
+            user.getUsername().trim().equals("") ||
+            user.getRecord().size() != 2
         ) {
             return null;
         }
