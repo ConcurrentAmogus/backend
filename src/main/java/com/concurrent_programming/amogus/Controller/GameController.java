@@ -24,7 +24,7 @@ public class GameController {
     SimpMessagingTemplate simpMessagingTemplate;
 
     @PostMapping("/join")
-    public void joinGame(@RequestBody User user){
+    public void joinGame(@RequestBody User user) throws ExecutionException, InterruptedException{
         gameService.joinGame(user);
     }
 

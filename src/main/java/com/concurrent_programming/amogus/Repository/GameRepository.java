@@ -18,18 +18,28 @@ public class GameRepository{
         if (game.isInLobby() == true) {
             return game;
         }
-
-        ApiFuture<WriteResult> apiFuture = firestore.collection("game").document(game.isInLobby()).set(game);
+        // ApiFuture<WriteResult> apiFuture = firestore.collection("game").document(game.isInLobby()).set(game);
         return game;
     }
 
-    public User update(User user) throws ExecutionException, InterruptedException {
-        DocumentReference documentReference = firestore.collection("user").document(user.getId());
+    public GameState update(GameState game) throws ExecutionException, InterruptedException {
+        DocumentReference documentReference = firestore.collection("game").document(game.currentPlayerSurvived().getId());
         ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
         DocumentSnapshot doc = apiFuture.get();
         if(doc.exists()) {
-            ApiFuture<WriteResult> writeResultApiFuture = firestore.collection("user").document(user.getId()).set(user);
-            return user;
+            ApiFuture<WriteResult> writeResultApiFuture = firestore.collection("game").document(game.getId()).set(game);
+            return game;
+        }
+        return null;
+    }
+
+    public GameState save(GameState game) throws ExecutionException, InterruptedException{
+        DocumentReference documentReference = firestore.collection("game").document(game.currentPlayerSurvived().getId());
+        ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
+        DocumentSnapshot doc = apiFuture.get();
+        if(doc.exists()) {
+            ApiFuture<WriteResult> writeResultApiFuture = firestore.collection("game").document(game.getId()).set(game);
+            return game;
         }
         return null;
     }

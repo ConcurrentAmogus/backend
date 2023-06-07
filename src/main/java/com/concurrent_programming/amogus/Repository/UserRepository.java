@@ -1,5 +1,6 @@
 package com.concurrent_programming.amogus.Repository;
 
+import com.concurrent_programming.amogus.Model.GameState;
 import com.concurrent_programming.amogus.Model.User;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -71,6 +72,27 @@ public class UserRepository {
             return "Deleted";
         }
         return "";
+    }
+    public boolean existsById(String id) throws ExecutionException, InterruptedException {
+        DocumentReference documentReference = firestore.collection("user").document(id);
+        ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
+        DocumentSnapshot doc = apiFuture.get();
+        if(doc.exists()) {
+            return true;
+        }
+        return false;
+    }
+
+    public void save(User user) throws ExecutionException, InterruptedException {
+        String userId = user.getId();
+        DocumentReference documentReference = firestore.collection("user").document(userId);
+        ApiFuture<DocumentSnapshot> apiFuture = documentReference.get();
+        DocumentSnapshot doc = apiFuture.get();
+        if(doc.exists()){
+            throw new IllegalStateException("User with ID "+userId+" already exists.");
+        }else{
+            ApiFuture<WriteResult> writeResultApiFuture = documentReference.set(user);
+        }
     }
 
 }
