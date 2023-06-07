@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import com.concurrent_programming.amogus.Service.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,9 +24,15 @@ import java.util.Map;
 public class RoomController {
 
     private List<Room> roomList = new ArrayList<>();
+    private final TimerService timerService;
 
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+    public RoomController(TimerService timerService) {
+        this.timerService = timerService;
+    }
 
     @GetMapping("/check-availability/{roomId}")
     public ResponseEntity<Map<String, String>> checkRoomAvailability(@PathVariable(value = "roomId") String roomId) {
@@ -70,6 +77,12 @@ public class RoomController {
             if (room.isNewRoom()) {
                 roomList.add(room);
                 room.setNewRoom(false);
+            }
+
+             // Eg. Start the timer if the room status is "START"
+            //  if (room.getStatus().equals("START")) {
+             if (room.getStatus().equals("WAITING")) { //but since now no start yet
+                timerService.startTimer(room.getId(), "night", 15000);
             }
 
             String topic = "/room/" + room.getId();
