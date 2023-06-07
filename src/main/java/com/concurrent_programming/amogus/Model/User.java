@@ -16,4 +16,15 @@ public class User {
     // game state
     private String role;
     private boolean isAlive;
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", username='" + username + '\'' +
+                ", record=" + record +
+                ", role='" + role + '\'' +
+                ", isAlive=" + isAlive +
+                '}';
+    }
 }
