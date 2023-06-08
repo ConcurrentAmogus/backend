@@ -56,7 +56,6 @@ public class GameTimer {
     }
 
     public void startTimer() {
-        System.out.println("Come here plsss");
         this.isCurrentPhase = true;
         timer = new Timer();
         timerTask = new TimerTask() {
@@ -68,7 +67,7 @@ public class GameTimer {
                     try {
                         System.out.println("remaining time: " + remainingTime);
                         remainingTime -= 1000;
-                        messagingTemplate.convertAndSend("/remaining-time/" +roomId + "/" + phase, remainingTime);
+                        messagingTemplate.convertAndSend("/timer/" +roomId + "/" + phase, remainingTime);
                     } catch (Exception ex) {
                         throw new RuntimeException("Failed to handle timer");
                     }
