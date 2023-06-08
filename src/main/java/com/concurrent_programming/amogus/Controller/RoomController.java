@@ -24,87 +24,66 @@ public class RoomController {
     private final List<Room> roomList = new ArrayList<>();
 
     @Autowired
+    RoomService roomService;
+    @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
     @GetMapping("/check-availability/{roomId}")
     public ResponseEntity<Map<String, String>> checkRoomAvailability(@PathVariable(value = "roomId") String roomId) {
-        System.out.println("checking" + roomId);
-        System.out.println("checking roomlist " + roomList);
-        Map<String, String> response = new HashMap<>();
-
-        if (roomList.size() == 0) {
-            response.put("available", "false");
-            response.put("reason", "NOT_EXISTED");
-        } else {
-            for (Room room: roomList) {
-                if (room.getId().equals(roomId)) {
-                    if (room.getStatus().equals("START")) {
-                        response.put("available", "false");
-                        response.put("reason", "STARTED");
-                    } else if (room.getStatus().equals("END")) {
-                        response.put("available","false");
-                        response.put("reason", "ENDED");
-                    } else if (room.getPlayers().size() == 16) {
-                        response.put("available","false");
-                        response.put("reason", "FULL");
-                    } else {
-                        response.put("available", "true");
-                        response.put("reason", "WAITING");
-                    }
-                    break;
-                } else {
-                    response.put("available", "false");
-                    response.put("reason", "NOT_EXISTED");
-                }
-            }
-        }
+        Map<String, String> response = roomService.getRoomAvailability(roomList, roomId);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/{roomId}")
+    public ResponseEntity<Room> getRoom(@PathVariable(value = "roomId") String roomId) {
+        for(Room room: roomList) {
+            if (room.getId().equals(roomId)) {
+                return ResponseEntity.status(HttpStatus.OK).body(room);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
     // Mapped as /ws/update-room
     @MessageMapping("/update-room")
     public Room updateRoomInfo(@Payload Room room) {
-        try {
-            System.out.println("Room Info: \n" +  room);
-            synchronized (roomList) {
-                List<User> players;
-                if (room.isNewRoom()) {
-                    players = new ArrayList<>();
-                    players.add(room.getNewJoinPlayer());
-                    room.setPlayers(players);
+        System.out.println("Join Room: \n" +  room);
 
-                    room.setNewRoom(false);
-                    roomList.add(room);
-                } else {
-                    Room currentRoom = null;
-                    for (Room r : roomList) {
-                        if (r.getId().equals(room.getId())) {
-                            currentRoom = r;
-                        }
-                    }
-                    if (currentRoom != null) {
-                        players = currentRoom.getPlayers();
+        synchronized (roomList) {
+            List<User> players;
+            if (room.isNewRoom()) {
+                players = new ArrayList<>();
+                players.add(room.getNewJoinPlayer());
+                room.setPlayers(players);
+
+                room.setNewRoom(false);
+                roomList.add(room);
+            } else {
+                for (Room r : roomList) {
+                    if (r.getId().equals(room.getId())) {
+                        players = r.getPlayers();
                         players.add(room.getNewJoinPlayer());
+                        r.setPlayers(players);
                         room.setPlayers(players);
+                        break;
                     }
                 }
-
-                String topic = "/room/" + room.getId();
-                simpMessagingTemplate.convertAndSend(topic, room);
-
-                System.out.println("Room List: \n" +  roomList);
             }
-            return room;
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to update the room: " + ex.getMessage());
+
+            String topic = "/room/" + room.getId();
+            simpMessagingTemplate.convertAndSend(topic, room);
         }
+        System.out.println("Room List: \n" +  roomList);
+
+        return room;
     }
 
     @MessageMapping("/get-room")
     public void getRoomInfo(String roomId) {
         for(Room r: roomList) {
             if (r.getId().equals(roomId)) {
+                System.out.println("Get Room: \n" + r);
                 String topic = "/room/" + roomId;
                 simpMessagingTemplate.convertAndSend(topic, r);
                 break;
