@@ -10,7 +10,7 @@ public class Room {
     private String id;
     private String status;
     private boolean isNewRoom;
-    private String cycle;           // night / day
+    private String phase;           // night / day
 
     private User host;
     private User newJoinPlayer;

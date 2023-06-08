@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.concurrent_programming.amogus.Service.*;
+import com.concurrent_programming.amogus.Service.*;
 
 import java.util.*;
 
@@ -147,7 +148,7 @@ public class RoomController {
 
                     r.setPlayers(players);
                     r.setStatus("STARTED");
-                    r.setCycle("night");
+                    r.setPhase("night");
 
                     System.out.println("Game start: \n" + r);
 
