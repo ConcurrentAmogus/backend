@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
 @Data
 public class GameTimer {
     private Timer timer;

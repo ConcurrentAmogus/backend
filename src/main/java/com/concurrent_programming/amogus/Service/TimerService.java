@@ -15,8 +15,6 @@ public class TimerService {
 
     @Autowired
     SimpMessagingTemplate messagingTemplate;
-    @Autowired
-    GameTimer gameTimer;
 
     public void startTimer(String roomId, String phase, long duration) {
         stopAllTimers(roomId);
