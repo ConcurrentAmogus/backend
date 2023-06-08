@@ -1,6 +1,9 @@
 package com.concurrent_programming.amogus.Service;
 
 import org.springframework.stereotype.Service;
+
+import com.concurrent_programming.amogus.Model.GameTimer;
+
 import java.util.Map;
 import java.util.HashMap;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -10,14 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class TimerService {
     private final Map<String, Map<String, GameTimer>> timers = new HashMap<>();
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final GameTimer gameTimer;
-
     @Autowired
-    public TimerService(SimpMessagingTemplate messagingTemplate, GameTimer gameTimer) {
-        this.messagingTemplate = messagingTemplate;
-        this.gameTimer = gameTimer;
-    }
+    SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    GameTimer gameTimer;
 
     public void startTimer(String roomId, String phase, long duration) {
         stopAllTimers(roomId);
@@ -51,20 +50,24 @@ public class TimerService {
     }
 
     public void handleTimerStartRequest(String roomId, String phase) {
-        Map<String, GameTimer> roomTimers = timers.get(roomId);
-        if (roomTimers != null && !roomTimers.containsKey(phase)) {
-            GameTimer gameTimer = new GameTimer(messagingTemplate);
-            gameTimer.setPhase(phase);
-            gameTimer.setClientHasSubscribed(true);
-            gameTimer.startTimer();
-            roomTimers.put(phase, gameTimer);
+        //the remaining time is pass to frontend, so this duration set need to be 1s more than the remaining time u want
+        //eg. set 16s (display 0-15s)
+        Long duration = (long) 11000;
+        switch (phase) {
+            case "night":
+                duration = (long) 16000;
+                break;
+            case "day":
+                duration = (long) 31000;
+                break;
+            case "vote":
+                duration = (long) 21000;
+                break;
+            default:
+                duration = (long) 11000;
+                break;
         }
-    }
-
-    public void startTimerForRoomWithPlayerCount(String roomId, int playerCount, String phase, long duration) {
-        if (playerCount >= 1) { // Adjust the condition based on your game's requirements
-            startTimer(roomId, phase, duration);
-        }
+        this.startTimer(roomId,phase,duration);
     }
 
     public String getCurrentPhase(String roomId) {
@@ -87,5 +90,4 @@ public class TimerService {
         }
         return 0;
     }
-
 }

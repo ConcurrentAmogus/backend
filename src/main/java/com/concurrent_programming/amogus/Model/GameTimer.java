@@ -1,6 +1,9 @@
-package com.concurrent_programming.amogus.Service;
+package com.concurrent_programming.amogus.Model;
 
 import org.springframework.stereotype.Service;
+
+import lombok.Data;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
+@Data
 public class GameTimer {
     private Timer timer;
     private TimerTask timerTask;
@@ -16,7 +20,7 @@ public class GameTimer {
     private String phase;
     private String roomId;
     private boolean isCurrentPhase;
-    private AtomicBoolean clientHasSubscribed = new AtomicBoolean(false);
+    private AtomicBoolean clientHasSubscribed;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -24,14 +28,7 @@ public class GameTimer {
     public GameTimer(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
         this.isCurrentPhase = false;
-    }
-
-    public void setPhase(String phase) {
-        this.phase = phase;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
+        this.clientHasSubscribed = new AtomicBoolean(false);
     }
 
     public void setClientHasSubscribed(boolean clientHasSubscribed) {
@@ -41,6 +38,10 @@ public class GameTimer {
     public void setDuration(long duration) {
         this.duration = duration;
         this.remainingTime = duration;
+    }
+
+    public boolean isCurrentPhase() {
+        return isCurrentPhase;
     }
 
     public void checkAndStartTimer() {
@@ -56,6 +57,7 @@ public class GameTimer {
     }
 
     public void startTimer() {
+        System.out.println("Come here plsss");
         this.isCurrentPhase = true;
         timer = new Timer();
         timerTask = new TimerTask() {
@@ -64,9 +66,13 @@ public class GameTimer {
                 if (remainingTime <= 0) {
                     stopTimer();
                 } else {
-                    remainingTime -= 1000;
-                    System.out.println("remaining time: " + remainingTime);
-                    messagingTemplate.convertAndSend("/remaining-time/" +roomId + "/" + phase, remainingTime);
+                    try {
+                        System.out.println("remaining time: " + remainingTime);
+                        remainingTime -= 1000;
+                        messagingTemplate.convertAndSend("/remaining-time/" +roomId + "/" + phase, remainingTime);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Failed to handle timer");
+                    }
                 }
             }
         };
@@ -81,13 +87,5 @@ public class GameTimer {
             timer = null;
             timerTask = null;
         }
-    }
-
-    public long getRemainingTime() {
-        return remainingTime;
-    }
-
-    public boolean isCurrentPhase() {
-        return isCurrentPhase;
     }
 }
