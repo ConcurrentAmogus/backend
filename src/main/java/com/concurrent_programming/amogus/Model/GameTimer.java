@@ -67,7 +67,7 @@ public class GameTimer {
                     try {
                         System.out.println("remaining time: " + remainingTime);
                         remainingTime -= 1000;
-                        messagingTemplate.convertAndSend("/timer/" +roomId + "/" + phase, remainingTime);
+                        messagingTemplate.convertAndSend("/timer/" + roomId , remainingTime);
                     } catch (Exception ex) {
                         throw new RuntimeException("Failed to handle timer");
                     }

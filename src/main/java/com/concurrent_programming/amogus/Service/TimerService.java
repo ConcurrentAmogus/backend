@@ -49,22 +49,14 @@ public class TimerService {
 
     public void handleTimerStartRequest(String roomId, String phase) {
         //the remaining time is pass to frontend, so this duration set need to be 1s more than the remaining time u want
-        //eg. set 16s (display 0-15s)
-        Long duration = (long) 11000;
-        switch (phase) {
-            case "night":
-                duration = (long) 16000;
-                break;
-            case "day":
-                duration = (long) 31000;
-                break;
-            case "vote":
-                duration = (long) 21000;
-                break;
-            default:
-                duration = (long) 11000;
-                break;
-        }
+        //e.g. set 16s (display 0-15s)
+        Long duration = switch (phase) {
+            case "start" -> (long) 6000;
+            case "night" -> (long) 16000;
+            case "day" -> (long) 31000;
+            case "vote" -> (long) 21000;
+            default -> (long) 11000;
+        };
         this.startTimer(roomId,phase,duration);
     }
 

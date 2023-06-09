@@ -11,6 +11,7 @@ public class User {
 
     private String id;
     private String username;
+    private String number;
     private List<Integer> record; // 0 - win, 1 - lose
 
     // game state

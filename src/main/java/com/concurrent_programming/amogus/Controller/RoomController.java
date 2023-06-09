@@ -27,6 +27,10 @@ public class RoomController {
     @Autowired
     RoomService roomService;
     @Autowired
+    TimerService timerService;
+    @Autowired
+    VoteController voteController;
+    @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
     @GetMapping("/check-availability/{roomId}")
@@ -49,56 +53,78 @@ public class RoomController {
     // Mapped as /ws/update-room
     @MessageMapping("/update-room")
     public Room updateRoomInfo(@Payload Room room) {
+        System.out.println("***************************************");
         System.out.println("Join Room: \n" +  room);
 
         synchronized (roomList) {
             List<User> players;
+            User newPlayer;
             if (room.isNewRoom()) {
                 players = new ArrayList<>();
-                players.add(room.getNewJoinPlayer());
+                newPlayer = room.getNewJoinPlayer();
+
+                players.add(newPlayer);
+                newPlayer.setNumber(String.valueOf(players.size()));
                 room.setPlayers(players);
 
                 room.setNewRoom(false);
                 roomList.add(room);
+
+                String topic = "/room/" + room.getId();
+                simpMessagingTemplate.convertAndSend(topic, room);
             } else {
                 for (Room r : roomList) {
                     if (r.getId().equals(room.getId())) {
                         players = r.getPlayers();
-                        players.add(room.getNewJoinPlayer());
+                        newPlayer = room.getNewJoinPlayer();
+
+                        players.add(newPlayer);
+                        newPlayer.setNumber(String.valueOf(players.size()));
+
                         r.setPlayers(players);
                         room.setPlayers(players);
+
+                        String topic = "/room/" + r.getId();
+                        simpMessagingTemplate.convertAndSend(topic, r);
                         break;
                     }
                 }
             }
-
-            String topic = "/room/" + room.getId();
-            simpMessagingTemplate.convertAndSend(topic, room);
         }
+        System.out.println("***************************************");
         System.out.println("Room List: \n" +  roomList);
 
         return room;
     }
 
     @MessageMapping("/get-room")
-    public void getRoomInfo(String roomId) {
-        for(Room r: roomList) {
-            if (r.getId().equals(roomId)) {
-                System.out.println("Get Room: \n" + r);
-                String topic = "/room/" + roomId;
-                simpMessagingTemplate.convertAndSend(topic, r);
-                break;
+    public void getRoomInfo(@Payload String roomId) {
+        synchronized (roomList) {
+            for (Room r : roomList) {
+                if (r.getId().equals(roomId)) {
+                    System.out.println("***************************************");
+                    System.out.println("Get Room: \n" + r);
+
+                    String topic = "/room/" + roomId;
+                    simpMessagingTemplate.convertAndSend(topic, r);
+                    break;
+                }
             }
         }
     }
 
     @MessageMapping("/exit-room")
-    public void exitRoom(Room room) {
+    public void exitRoom(@Payload Room room) {
         synchronized (roomList) {
             for (Room r: roomList) {
                 if (r.getId().equals(room.getId())) {
                     List<User> players = r.getPlayers();
                     players.removeIf(player -> player.getId().equals(room.getExitPlayer().getId()));
+
+                    for (int i = 0; i < players.size(); i++) {
+                        players.get(i).setNumber(String.valueOf(i + 1));
+                    }
+
                     r.setPlayers(players);
 
                     String topic = "/room/" + r.getId();
@@ -110,53 +136,40 @@ public class RoomController {
     }
 
     @MessageMapping("/start-game")
-    public void startGame(Room room) {
+    public void startGame(@Payload Room room) throws InterruptedException {
+        System.out.println("***************************************");
+        System.out.println("Start game: \n" + room);
+
+//        String result = "";
+//        do {
+//
+//            result = roomService.gameIsEnded(room);
+//        } while (result.equals("Continue"));
+
+        Room currentRoom = null;
         synchronized (roomList) {
-            for (Room r : roomList) {
-                if (r.getId().equals(room.getId())) {
-                    List<User> players = r.getPlayers();
-                    int[] numOfWolfSeer = new int[]{0, 0}; // [seer, wolf]
-
-                    if (players.size() <= 6) {
-                        numOfWolfSeer[0] = 1;
-                        numOfWolfSeer[1] = 1;
-                    } else if (players.size() <= 9) {
-                        numOfWolfSeer[0] = 1;
-                        numOfWolfSeer[1] = 2;
-                    } else {
-                        numOfWolfSeer[0] = 2;
-                        numOfWolfSeer[1] = 3;
-                    }
-
-                    Random random = new Random();
-                    for (int i = 0; i < numOfWolfSeer.length; i++) {
-                        for (int j = 0; j < numOfWolfSeer[i];) {
-                            int index = random.nextInt(players.size());
-                            if (players.get(index).getRole() == null) {
-                                if (i == 0) players.get(index).setRole("Seer");
-                                else players.get(index).setRole("Wolf");
-                                j++;
-                            }
-                        }
-                    }
-
-                    for (User player : players) {
-                        if (player.getRole() == null) {
-                            player.setRole("Villager");
-                        }
-                    }
-
-                    r.setPlayers(players);
-                    r.setStatus("STARTED");
-                    r.setPhase("night");
-
-                    System.out.println("Game start: \n" + r);
-
-                    String topic = "/room/" + r.getId();
-                    simpMessagingTemplate.convertAndSend(topic, r);
-                    break;
-                }
-            }
+            currentRoom = roomService.prepareGame(roomList, room);
         }
+
+        currentRoom.setStatus("STARTING");
+        String topic = "/room/" + currentRoom.getId();
+        simpMessagingTemplate.convertAndSend(topic, currentRoom);
+        timerService.handleTimerStartRequest(currentRoom.getId(), "start");
+
+        Thread.sleep(5000);
+
+        currentRoom.setStatus("STARTED");
+        currentRoom.setPhase("night");
+        simpMessagingTemplate.convertAndSend(topic, currentRoom);
+        timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+
+        Thread.sleep(15000);
+
+        currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
+        currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
+
+//        currentRoom.setPhase("day");
+//        simpMessagingTemplate.convertAndSend(topic, currentRoom);
+//        timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
     }
 }
