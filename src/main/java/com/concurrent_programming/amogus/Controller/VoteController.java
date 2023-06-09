@@ -26,10 +26,10 @@ public class VoteController {
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
-    @MessageMapping("/vote-private")
-    public void updateVote(@Payload Vote vote) {
+    @MessageMapping("/vote-night")
+    public void updateNightVote(@Payload Vote vote) {
         System.out.println("***************************************");
-        System.out.println("vote input: \n" + vote);
+        System.out.println("Night vote: \n" + vote);
 
         User votePlayer = vote.getVotePlayer();
         User selectedPlayer = vote.getSelectedPlayer();
@@ -54,6 +54,8 @@ public class VoteController {
         voteList.put(vote.getRoomId() + "-" + votePlayer.getRole(), vote); // <12345-Wolf, vote>
 
         System.out.println("***************************************");
+        System.out.println("Night vote after: \n" + vote);
+        System.out.println("***************************************");
         System.out.println("vote list: \n" + voteList);
 
         String topic = "/vote/" + vote.getRoomId() + "-" + votePlayer.getRole() + "/night";;
@@ -61,7 +63,18 @@ public class VoteController {
     }
 
     public Room calculateNightVote(Room room, String role) {
-        Map<String, String> votes = voteList.get(room.getId() + "-" + role).getVotes();
+        Vote vote = voteList.get(room.getId() + "-" + role);
+
+        if (vote == null) {
+            Vote voteData = new Vote();
+            voteData.setMessage("No one has been killed tonight");
+
+            String topic = "/vote/" + room.getId() + "-" + role + "/night";
+            simpMessagingTemplate.convertAndSend(topic, voteData);
+            return room;
+        }
+
+        Map<String, String> votes = vote.getVotes();
         Map<String, Integer> voteCounts = new HashMap<>();
 
         for (String playerNum : votes.values()) {
@@ -84,8 +97,8 @@ public class VoteController {
         }
 
         Vote voteData = new Vote();
+        voteData.setRoomId(room.getId());
         String eliminatedOrRevealedPlayerNum = "";
-        String topic = "/vote/" + room.getId() + "-" + role + "/night";
         if (playersWithHighestVotes.size() == 1) {
             eliminatedOrRevealedPlayerNum = playersWithHighestVotes.get(0);
 
@@ -110,6 +123,104 @@ public class VoteController {
             voteData.setMessage("No one has been killed tonight.");
         }
 
+        System.out.println("***************************************");
+        System.out.println("VoteData: \n" + voteData);
+        System.out.println("***************************************");
+        System.out.println("Room after vote: \n" + room);
+
+        String topic = "/vote/" + room.getId() + "-" + role + "/night";
+        simpMessagingTemplate.convertAndSend(topic, voteData);
+        return room;
+    }
+
+    @MessageMapping("/vote-day")
+    public void updateDayVote(@Payload Vote vote) {
+        System.out.println("***************************************");
+        System.out.println("Day vote: \n" + vote);
+
+        Map<String, String> votes = vote.getVotes();
+
+        if (votes == null) {
+            votes = new HashMap<>();
+        }
+
+        User votePlayer = vote.getVotePlayer();
+        User selectedPlayer = vote.getSelectedPlayer();
+
+        votes.put(votePlayer.getNumber(), selectedPlayer.getNumber());
+        vote.setVotes(votes);
+
+        voteList.put(vote.getRoomId(), vote);
+
+        System.out.println("***************************************");
+        System.out.println("Day vote after: \n" + vote);
+        System.out.println("***************************************");
+        System.out.println("vote list: \n" + voteList);
+
+        String topic = "/vote/" + vote.getRoomId() + "/day";
+        simpMessagingTemplate.convertAndSend(topic, vote);
+    }
+
+    public Room calculateDayVote(Room room) {
+        Map<String, String> votes = voteList.get(room.getId()).getVotes();
+        Map<String, Integer> voteCounts = new HashMap<>();
+
+        int numOfThreads = Runtime.getRuntime().availableProcessors();
+        ExecutorService executorService = Executors.newFixedThreadPool(numOfThreads);
+
+        List<Callable<Void>> tasks = new ArrayList<>();
+        for (String playerNum : votes.values()) {
+            tasks.add(() -> {
+                synchronized (voteCounts) {
+                    voteCounts.put(playerNum, voteCounts.getOrDefault(playerNum, 0) + 1);
+                }
+                return null;
+            });
+        }
+
+        try {
+            executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            executorService.shutdown();
+        }
+
+        List<String> playersWithHighestVotes = new ArrayList<>();
+        int highestVoteCount = 0;
+        for (Map.Entry<String, Integer> entry : voteCounts.entrySet()) {
+            String playerNum = entry.getKey();
+            int voteCount = entry.getValue();
+
+            if (voteCount > highestVoteCount) {
+                highestVoteCount = voteCount;
+                playersWithHighestVotes.clear();
+                playersWithHighestVotes.add(playerNum);
+            } else if (voteCount == highestVoteCount) {
+                playersWithHighestVotes.add(playerNum);
+            }
+        }
+
+        Vote voteData = new Vote();
+        voteData.setRoomId(room.getId());
+        String eliminatedOrRevealedPlayerNum = "";
+
+        if (playersWithHighestVotes.size() == 1) {
+            eliminatedOrRevealedPlayerNum = playersWithHighestVotes.get(0);
+
+            String finalEliminatedOrRevealedPlayerNum = eliminatedOrRevealedPlayerNum;
+            room.getPlayers().forEach(player -> {
+                if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum)) {
+                    player.setAlive(false);
+                    voteData.setKilledPlayer(player);
+                    voteData.setMessage(finalEliminatedOrRevealedPlayerNum + " has been killed.");
+                }
+            });
+        } else {
+            voteData.setMessage("No one has been killed tonight.");
+        }
+
+        String topic = "/vote/" + room.getId() + "/day";
         simpMessagingTemplate.convertAndSend(topic, voteData);
         return room;
     }

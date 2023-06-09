@@ -15,8 +15,8 @@ public class RoomService {
 
     public Map<String, String> getRoomAvailability(List<Room> roomList, String roomId) {
         System.out.println("***************************************");
-        System.out.println("checking" + roomId);
-        System.out.println("checking roomlist " + roomList);
+        System.out.println("Checking" + roomId);
+        System.out.println("Checking roomlist " + roomList);
 
         Map<String, String> roomAvailability = new HashMap<>();
 
@@ -108,9 +108,14 @@ public class RoomService {
             }
         }
 
+        System.out.println("***************************************");
+        System.out.println("Wolf count: " + wolfCounts);
+        System.out.println("***************************************");
+        System.out.println("Seer count: " + villagerCount);
+
         if (wolfCounts >= villagerCount) {
             return "Wolf wins";
-        } else if (wolfCounts <= 0) {
+        } else if (wolfCounts == 0) {
             return "Villager wins";
         } else {
             return "Continue";

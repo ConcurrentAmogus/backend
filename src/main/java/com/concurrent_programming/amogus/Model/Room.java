@@ -17,4 +17,5 @@ public class Room {
     private User exitPlayer;
     private List<User> players;
 
+    private String winner;
 }

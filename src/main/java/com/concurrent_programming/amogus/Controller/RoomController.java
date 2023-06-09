@@ -1,6 +1,5 @@
 package com.concurrent_programming.amogus.Controller;
 
-import com.concurrent_programming.amogus.Model.Game;
 import com.concurrent_programming.amogus.Model.Room;
 import com.concurrent_programming.amogus.Model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,36 +139,53 @@ public class RoomController {
         System.out.println("***************************************");
         System.out.println("Start game: \n" + room);
 
-//        String result = "";
-//        do {
-//
-//            result = roomService.gameIsEnded(room);
-//        } while (result.equals("Continue"));
-
+        String result = "";
         Room currentRoom = null;
+        String topic = "/room/" + room.getId();
+
         synchronized (roomList) {
             currentRoom = roomService.prepareGame(roomList, room);
         }
 
         currentRoom.setStatus("STARTING");
-        String topic = "/room/" + currentRoom.getId();
         simpMessagingTemplate.convertAndSend(topic, currentRoom);
         timerService.handleTimerStartRequest(currentRoom.getId(), "start");
 
         Thread.sleep(5000);
 
         currentRoom.setStatus("STARTED");
-        currentRoom.setPhase("night");
+
+        do {
+            currentRoom.setPhase("night");
+            simpMessagingTemplate.convertAndSend(topic, currentRoom);
+            timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+
+            Thread.sleep(15000);
+
+            currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
+            currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
+            simpMessagingTemplate.convertAndSend(topic, currentRoom);
+
+            result = roomService.gameIsEnded(currentRoom);
+            if (!result.equals("Continue")) break;
+
+            currentRoom.setPhase("day");
+            simpMessagingTemplate.convertAndSend(topic, currentRoom);
+            timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+
+            Thread.sleep(30000);
+
+            currentRoom = voteController.calculateDayVote(currentRoom);
+            simpMessagingTemplate.convertAndSend(topic, currentRoom);
+
+            result = roomService.gameIsEnded(currentRoom);
+        } while (result.equals("Continue"));
+
+        if (result.equals("Wolf wins")) {
+            currentRoom.setWinner("Wolf");
+        } else {
+            currentRoom.setWinner("Villager");
+        }
         simpMessagingTemplate.convertAndSend(topic, currentRoom);
-        timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
-
-        Thread.sleep(15000);
-
-        currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
-        currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
-
-//        currentRoom.setPhase("day");
-//        simpMessagingTemplate.convertAndSend(topic, currentRoom);
-//        timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
     }
 }
