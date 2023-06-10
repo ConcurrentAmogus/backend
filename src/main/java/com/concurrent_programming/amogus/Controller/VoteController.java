@@ -162,7 +162,18 @@ public class VoteController {
     }
 
     public Room calculateDayVote(Room room) {
-        Map<String, String> votes = voteList.get(room.getId()).getVotes();
+        Vote vote = voteList.get(room.getId());
+
+        if (vote == null) {
+            Vote voteData = new Vote();
+            voteData.setMessage("No one has been killed tonight");
+
+            String topic = "/vote/" + room.getId() + "/day";
+            simpMessagingTemplate.convertAndSend(topic, voteData);
+            return room;
+        }
+
+        Map<String, String> votes = vote.getVotes();
         Map<String, Integer> voteCounts = new HashMap<>();
 
         int numOfThreads = Runtime.getRuntime().availableProcessors();

@@ -53,11 +53,11 @@ public class TimerService {
         Long duration = switch (phase) {
             case "start" -> (long) 6000;
             case "night" -> (long) 16000;
-            case "day" -> (long) 31000;
+            case "day" -> (long) 61000;
             case "vote" -> (long) 21000;
             default -> (long) 11000;
         };
-        this.startTimer(roomId,phase,duration);
+        this.startTimer(roomId, phase, duration);
     }
 
     public String getCurrentPhase(String roomId) {
