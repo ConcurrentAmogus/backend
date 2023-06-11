@@ -8,13 +8,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 public class ChatController {
 
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
+    @Autowired
+    WebSocketMessageBrokerStats webSocketMessageBrokerStats;
 
     // Mapped as /ws/send-public-message
     @MessageMapping("/send-public-message")
@@ -27,6 +36,11 @@ public class ChatController {
         try {
             // topic = "/chat/{roomId}/public"
             simpMessagingTemplate.convertAndSendToUser(room.getId(), "/public", message);
+
+            System.out.println("************************************************");
+            System.out.println("Subscriptions: " + webSocketMessageBrokerStats.getWebSocketSessionStatsInfo());
+            System.out.println("************************************************");
+
             return message;
         } catch (Exception ex) {
             throw new RuntimeException("Failed to handle public message");

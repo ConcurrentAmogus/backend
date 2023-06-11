@@ -173,7 +173,7 @@ public class RoomController {
             simpMessagingTemplate.convertAndSend(topic, currentRoom);
             timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
 
-            Thread.sleep(30000);
+            Thread.sleep(60000);
 
             currentRoom = voteController.calculateDayVote(currentRoom);
             simpMessagingTemplate.convertAndSend(topic, currentRoom);
@@ -186,6 +186,7 @@ public class RoomController {
         } else {
             currentRoom.setWinner("Villager");
         }
+        currentRoom.setStatus("ENDED");
         simpMessagingTemplate.convertAndSend(topic, currentRoom);
     }
 }

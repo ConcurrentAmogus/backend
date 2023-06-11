@@ -65,12 +65,19 @@ public class VoteController {
     public Room calculateNightVote(Room room, String role) {
         Vote vote = voteList.get(room.getId() + "-" + role);
 
+        System.out.println("***************************************");
+        System.out.println("Vote night: \n" + vote);
+
         if (vote == null) {
-            Vote voteData = new Vote();
-            voteData.setMessage("No one has been killed tonight");
+            vote = new Vote();
+            if (role.equals("Wolf")) {
+                vote.setMessage("No one has been killed tonight");
+            } else {
+                vote.setMessage("");
+            }
 
             String topic = "/vote/" + room.getId() + "-" + role + "/night";
-            simpMessagingTemplate.convertAndSend(topic, voteData);
+            simpMessagingTemplate.convertAndSend(topic, vote);
             return room;
         }
 
@@ -105,7 +112,7 @@ public class VoteController {
             String finalEliminatedOrRevealedPlayerNum = eliminatedOrRevealedPlayerNum;
             if (role.equals("Wolf")) {
                 room.getPlayers().forEach(player -> {
-                    if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum)) {
+                    if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum) && player.isAlive()) {
                         player.setAlive(false);
                         voteData.setKilledPlayer(player);
                         voteData.setMessage(finalEliminatedOrRevealedPlayerNum + " has been killed.");
@@ -113,23 +120,36 @@ public class VoteController {
                 });
             } else {
                 room.getPlayers().forEach(player -> {
-                    if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum)) {
+                    if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum) && player.isAlive()) {
                         voteData.setRevealedRolePlayer(player);
                         voteData.setMessage(finalEliminatedOrRevealedPlayerNum + " is a " + player.getRole());
                     }
                 });
             }
         } else {
-            voteData.setMessage("No one has been killed tonight.");
+            if (role.equals("Wolf")) {
+                voteData.setMessage("No one has been killed tonight");
+            } else {
+                voteData.setMessage("");
+            }
         }
 
         System.out.println("***************************************");
         System.out.println("VoteData: \n" + voteData);
-        System.out.println("***************************************");
-        System.out.println("Room after vote: \n" + room);
 
         String topic = "/vote/" + room.getId() + "-" + role + "/night";
         simpMessagingTemplate.convertAndSend(topic, voteData);
+
+        Map<String, String> newVotes = new HashMap<>();
+        voteData.setMessage("");
+        voteData.setKilledPlayer(null);
+        voteData.setRevealedRolePlayer(null);
+        voteData.setVotes(newVotes);
+        voteList.put(room.getId() + "-" + role, voteData);
+
+        System.out.println("***************************************");
+        System.out.println("Night after vote: \n" + voteList);
+
         return room;
     }
 
@@ -165,11 +185,11 @@ public class VoteController {
         Vote vote = voteList.get(room.getId());
 
         if (vote == null) {
-            Vote voteData = new Vote();
-            voteData.setMessage("No one has been killed tonight");
+            vote = new Vote();
+            vote.setMessage("No one has been killed today");
 
             String topic = "/vote/" + room.getId() + "/day";
-            simpMessagingTemplate.convertAndSend(topic, voteData);
+            simpMessagingTemplate.convertAndSend(topic, vote);
             return room;
         }
 
@@ -221,18 +241,32 @@ public class VoteController {
 
             String finalEliminatedOrRevealedPlayerNum = eliminatedOrRevealedPlayerNum;
             room.getPlayers().forEach(player -> {
-                if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum)) {
+                if (player.getNumber().equals(finalEliminatedOrRevealedPlayerNum) && player.isAlive()) {
                     player.setAlive(false);
                     voteData.setKilledPlayer(player);
                     voteData.setMessage(finalEliminatedOrRevealedPlayerNum + " has been killed.");
                 }
             });
         } else {
-            voteData.setMessage("No one has been killed tonight.");
+            voteData.setMessage("No one has been killed today.");
         }
+
+        System.out.println("***************************************");
+        System.out.println("VoteData: \n" + voteData);
 
         String topic = "/vote/" + room.getId() + "/day";
         simpMessagingTemplate.convertAndSend(topic, voteData);
+
+        Map<String, String> newVotes = new HashMap<>();
+        voteData.setMessage("");
+        voteData.setKilledPlayer(null);
+        voteData.setRevealedRolePlayer(null);
+        voteData.setVotes(newVotes);
+        voteList.put(room.getId(), voteData);
+
+        System.out.println("***************************************");
+        System.out.println("Day after vote: \n" + voteList);
+
         return room;
     }
 }
