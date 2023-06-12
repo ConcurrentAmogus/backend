@@ -11,11 +11,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.concurrent_programming.amogus.Service.*;
-import com.concurrent_programming.amogus.Service.*;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Controller
 @RestController
@@ -143,6 +142,7 @@ public class RoomController {
             System.out.println("Current thread: \n" + Thread.currentThread());
             System.out.println("Start game: \n" + room);
 
+            int round = 0;
             String result = "";
             Room currentRoom = null;
             String topic = "/room/" + room.getId();
@@ -168,6 +168,7 @@ public class RoomController {
             currentRoom.setStatus("STARTED");
 
             do {
+                round++;
                 currentRoom.setPhase("night");
                 simpMessagingTemplate.convertAndSend(topic, currentRoom);
                 timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
@@ -199,6 +200,8 @@ public class RoomController {
                 simpMessagingTemplate.convertAndSend(topic, currentRoom);
 
                 result = roomService.gameIsEnded(currentRoom);
+
+                if (round == 10) break;
             } while (result.equals("Continue"));
 
             if (result.equals("Wolf wins")) {
