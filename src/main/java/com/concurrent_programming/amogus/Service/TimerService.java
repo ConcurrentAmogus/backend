@@ -51,10 +51,10 @@ public class TimerService {
         //the remaining time is pass to frontend, so this duration set need to be 1s more than the remaining time u want
         //e.g. set 16s (display 0-15s)
         Long duration = switch (phase) {
+            // Lambda Expression
             case "start" -> (long) 6000;
-            case "night" -> (long) 16000;
+            case "night" -> (long) 31000;
             case "day" -> (long) 61000;
-            case "vote" -> (long) 21000;
             default -> (long) 11000;
         };
         this.startTimer(roomId, phase, duration);

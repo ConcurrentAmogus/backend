@@ -160,7 +160,7 @@ public class RoomController {
             simpMessagingTemplate.convertAndSend(topic, currentRoom);
             timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
 
-            Thread.sleep(15000);
+            Thread.sleep(30000);
 
             currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
             currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
