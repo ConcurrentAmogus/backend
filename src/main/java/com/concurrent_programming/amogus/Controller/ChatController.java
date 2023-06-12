@@ -35,7 +35,7 @@ public class ChatController {
 
         try {
             // topic = "/chat/{roomId}/public"
-            simpMessagingTemplate.convertAndSendToUser(room.getId(), "/public", message);
+            simpMessagingTemplate.convertAndSend("/chat/" + room.getId() + "/public", message);
 
             System.out.println("************************************************");
             System.out.println("Subscriptions: " + webSocketMessageBrokerStats.getWebSocketSessionStatsInfo());
@@ -56,7 +56,7 @@ public class ChatController {
 
         try {
             // topic = "/chat/{roomId}-{role}/private"
-            simpMessagingTemplate.convertAndSendToUser(room.getId() + "-" + user.getRole(), "/private", message);
+            simpMessagingTemplate.convertAndSend("/chat/" + room.getId() + "-" + user.getRole() + "/private", message);
             return message;
         } catch (Exception ex) {
             throw new RuntimeException("Failed to handle private message");
