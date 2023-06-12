@@ -14,6 +14,8 @@ import com.concurrent_programming.amogus.Service.*;
 import com.concurrent_programming.amogus.Service.*;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Controller
 @RestController
@@ -136,57 +138,80 @@ public class RoomController {
 
     @MessageMapping("/start-game")
     public void startGame(@Payload Room room) throws InterruptedException {
-        System.out.println("***************************************");
-        System.out.println("Start game: \n" + room);
+        Runnable thread = () -> {
+            System.out.println("***************************************");
+            System.out.println("Current thread: \n" + Thread.currentThread());
+            System.out.println("Start game: \n" + room);
 
-        String result = "";
-        Room currentRoom = null;
-        String topic = "/room/" + room.getId();
+            String result = "";
+            Room currentRoom = null;
+            String topic = "/room/" + room.getId();
 
-        synchronized (roomList) {
-            currentRoom = roomService.prepareGame(roomList, room);
-        }
+            synchronized (roomList) {
+                try {
+                    currentRoom = roomService.prepareGame(roomList, room);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
-        currentRoom.setStatus("STARTING");
-        simpMessagingTemplate.convertAndSend(topic, currentRoom);
-        timerService.handleTimerStartRequest(currentRoom.getId(), "start");
-
-        Thread.sleep(5000);
-
-        currentRoom.setStatus("STARTED");
-
-        do {
-            currentRoom.setPhase("night");
+            currentRoom.setStatus("STARTING");
             simpMessagingTemplate.convertAndSend(topic, currentRoom);
-            timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+            timerService.handleTimerStartRequest(currentRoom.getId(), "start");
 
-            Thread.sleep(30000);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
-            currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
-            currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
+            currentRoom.setStatus("STARTED");
+
+            do {
+                currentRoom.setPhase("night");
+                simpMessagingTemplate.convertAndSend(topic, currentRoom);
+                timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                currentRoom = voteController.calculateNightVote(currentRoom, "Wolf");
+                currentRoom = voteController.calculateNightVote(currentRoom, "Seer");
+                simpMessagingTemplate.convertAndSend(topic, currentRoom);
+
+                result = roomService.gameIsEnded(currentRoom);
+                if (!result.equals("Continue")) break;
+
+                currentRoom.setPhase("day");
+                simpMessagingTemplate.convertAndSend(topic, currentRoom);
+                timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
+
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                currentRoom = voteController.calculateDayVote(currentRoom);
+                simpMessagingTemplate.convertAndSend(topic, currentRoom);
+
+                result = roomService.gameIsEnded(currentRoom);
+            } while (result.equals("Continue"));
+
+            if (result.equals("Wolf wins")) {
+                currentRoom.setWinner("Wolf");
+            } else {
+                currentRoom.setWinner("Villager");
+            }
+            currentRoom.setStatus("ENDED");
             simpMessagingTemplate.convertAndSend(topic, currentRoom);
+        };
 
-            result = roomService.gameIsEnded(currentRoom);
-            if (!result.equals("Continue")) break;
+        Thread run = new Thread(thread);
 
-            currentRoom.setPhase("day");
-            simpMessagingTemplate.convertAndSend(topic, currentRoom);
-            timerService.handleTimerStartRequest(currentRoom.getId(), currentRoom.getPhase());
-
-            Thread.sleep(60000);
-
-            currentRoom = voteController.calculateDayVote(currentRoom);
-            simpMessagingTemplate.convertAndSend(topic, currentRoom);
-
-            result = roomService.gameIsEnded(currentRoom);
-        } while (result.equals("Continue"));
-
-        if (result.equals("Wolf wins")) {
-            currentRoom.setWinner("Wolf");
-        } else {
-            currentRoom.setWinner("Villager");
-        }
-        currentRoom.setStatus("ENDED");
-        simpMessagingTemplate.convertAndSend(topic, currentRoom);
+        run.start();
     }
 }
