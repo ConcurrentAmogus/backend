@@ -26,10 +26,10 @@ public class RoomService {
         } else {
             for (Room room: roomList) {
                 if (room.getId().equals(roomId)) {
-                    if (room.getStatus().equals("START")) {
+                    if (room.getStatus().equals("STARTED")) {
                         roomAvailability.put("available", "false");
                         roomAvailability.put("reason", "STARTED");
-                    } else if (room.getStatus().equals("END")) {
+                    } else if (room.getStatus().equals("ENDED")) {
                         roomAvailability.put("available","false");
                         roomAvailability.put("reason", "ENDED");
                     } else if (room.getPlayers().size() == 16) {
